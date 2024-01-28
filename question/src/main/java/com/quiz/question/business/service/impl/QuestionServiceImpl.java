@@ -1,6 +1,9 @@
 package com.quiz.question.business.service.impl;
 
+import com.quiz.question.business.dto.request.QuestionAnswer;
 import com.quiz.question.business.dto.request.QuestionReqDto;
+import com.quiz.question.business.dto.response.AnswerResponse;
+import com.quiz.question.business.dto.response.AnswerResponses;
 import com.quiz.question.business.dto.response.QuestionRespDto;
 import com.quiz.question.business.mappers.QuestionMapper;
 import com.quiz.question.business.mappers.QuestionOptionMapper;
@@ -18,8 +21,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Service
@@ -140,4 +145,65 @@ public class QuestionServiceImpl implements QuestionService {
         );
     }
 
+    @Override
+    public ResponseDto<Collection<Long>> getRandomQuestionsByCategoryForQuiz(int number, String category) {
+        return ResponseBuilder.retrievedAll(
+                questionRepository.getRandomQuestionsByCategoryForQuiz(number,category)
+        );
+    }
+
+    @Override
+    public ResponseDto<Collection<Long>> getRandomQuestionsByCategoryAndDifficultyForQuiz(int number, String category, String difficulty) {
+        return ResponseBuilder.retrievedAll(
+                questionRepository.getRandomQuestionsByCategoryAndDifficultyForQuiz(number,category, difficulty)
+        );
+    }
+
+    @Override
+    public ResponseDto<Collection<Long>> getRandomQuestionsForQuiz(int number) {
+        return ResponseBuilder.retrievedAll(
+                questionRepository.getRandomQuestionsForQuiz(number)
+        );
+    }
+
+    @Override
+    public ResponseDto<Collection<QuestionRespDto>> getQuestionsByIds(List<Long> ids) {
+        return ResponseBuilder.retrievedAll(
+                questionRepository.findAllById(ids)
+                        .stream()
+                        .map(questionMapper::entityToRespDto)
+                        .collect(Collectors.toSet())
+        );
+    }
+
+    @Override
+    public ResponseDto<AnswerResponses> calculateAnswers(List<QuestionAnswer> questionAnswers) {
+        AtomicInteger correctAnswers = new AtomicInteger(0);
+        Set<AnswerResponse> answerResponses = questionAnswers
+                .stream()
+                .map(questionAnswer -> {
+                    Question question = questionRepository.findById(questionAnswer.getId())
+                            .orElseThrow(() -> new ObjectNotFoundException("question not found with given id " + questionAnswer.getId()));
+                    AnswerResponse answerResponse = questionMapper.createAnswerResponse(question, questionAnswer);
+                    if (answerResponse.isCorrect()){
+                        correctAnswers.incrementAndGet();
+                    }
+                    return answerResponse;
+                })
+                .collect(Collectors.toSet());
+        AnswerResponses answers = AnswerResponses.builder()
+                .answerResponses(answerResponses)
+//                .score(calculateScore(answerResponses))
+                .score((float) correctAnswers.get() / answerResponses.size())
+                .build();
+        return ResponseBuilder.retrieved(answers);
+    }
+
+    private float calculateScore(Set<AnswerResponse> answerResponses) {
+        return (float) getCorrectCount(answerResponses) / answerResponses.size();
+    }
+
+    private static long getCorrectCount(Set<AnswerResponse> answerResponses) {
+        return answerResponses.stream().filter(AnswerResponse::isCorrect).count();
+    }
 }

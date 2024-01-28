@@ -1,8 +1,8 @@
-package com.quiz.question.exceptions.handler;
+package com.quiz.quiz.exceptions.handler;
 
-import com.quiz.question.exceptions.ObjectNotFoundException;
-import com.quiz.question.globals.ResponseDto;
-import com.quiz.question.utils.ResponseBuilder;
+import com.quiz.quiz.exceptions.ObjectNotFoundException;
+import com.quiz.quiz.globals.ResponseDto;
+import com.quiz.quiz.utils.ResponseBuilder;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;

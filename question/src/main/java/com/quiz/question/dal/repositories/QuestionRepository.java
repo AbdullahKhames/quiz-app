@@ -20,4 +20,12 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
 
     @Query(value = "SELECT q FROM Question q ORDER BY FUNCTION('RANDOM')  LIMIT ?1")
     Set<Question> getRandomQuestions(@Param("number") int number);
+    @Query(value = "SELECT q.id FROM Question q WHERE upper(q.category) = upper(:category) ORDER BY FUNCTION('RANDOM') LIMIT :number")
+    Set<Long> getRandomQuestionsByCategoryForQuiz(@Param("number") int number, @Param("category") String category);
+
+    @Query(value = "SELECT q.id FROM Question q WHERE upper(q.category) = upper(:category) AND upper(q.difficulty) = upper(:difficulty) ORDER BY FUNCTION('RANDOM')  LIMIT :number")
+    Set<Long> getRandomQuestionsByCategoryAndDifficultyForQuiz(@Param("number") int number, @Param("category") String category, @Param("difficulty") String difficulty);
+
+    @Query(value = "SELECT q.id FROM Question q ORDER BY FUNCTION('RANDOM')  LIMIT ?1")
+    Set<Long> getRandomQuestionsForQuiz(@Param("number") int number);
 }
